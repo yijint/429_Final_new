@@ -62,18 +62,18 @@ random.seed(0)
 random.shuffle(paths)
 
 good_paths = list(filter(lambda c: c.split('/')[-1] in video_names, paths)) #should only get path where good video name; not sure if this filtering will work 
+## DOUBLE CHECK good paths 
 d=dataset(paths=good_paths, v_names=video_names, v_labels=video_labels)
 loader = torch.utils.data.DataLoader(d, shuffle=True, batch_size=10, drop_last=False, num_workers=4)
 
-
-i3d = InceptionI3d(400, in_channels=3)  #400 is num_classes 
+i3d = InceptionI3d(len(set(video_labels)), in_channels=3) # first input is num_classes 
 i3d.load_state_dict(torch.load('rgb_imagenet.pt'))
 num_classes = len(set(video_labels)) #count unique in labels
 i3d.replace_logits(num_classes)
 i3d.cuda()
 
 # set up gradient descent params
-optimizer = optim.SGD(i3d.parameters(), lr=0.1, momentum=0.9, weight_decay=0.0000001) #weight_decay = l2 regularization
+optimizer = optim.SGD(i3d.parameters(), lr=0.1, momentum=0.9, weight_decay=0.0000001) # weight_decay = l2 regularization
 
 lr_sched = optim.lr_scheduler.MultiStepLR(optimizer, [300, 1000])
 
