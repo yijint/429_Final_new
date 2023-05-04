@@ -46,9 +46,24 @@ def run_preprocessing():
     top_idx = []
     for i in range(len(single_class_labels)):
         if(single_class_labels[i] in top_labels): top_idx.append(i)
-        
+
     # find names and labels of videos with top single-class labels
     v_names = single_class_video_names[top_idx]
     v_labels = single_class_labels[top_idx]
 
-    return v_names, v_labels
+    # reorder the labels from 0 to num_classes
+    video_labels = np.zeros(4805, dtype=np.int8)
+    unique_labels = list(set(v_labels))
+    for i in range(len(v_labels)):
+        video_labels[i] = unique_labels.index(v_labels[i])
+
+    return v_names, video_labels
+
+# function to get action name based on video label 
+def get_action(v_label):
+    # Get the action name corresponding to each label:
+    df_action = pd.read_csv('labels/df_action.txt')
+    label_id = df_action["index"].to_numpy()
+    action_names = df_action["action"].to_numpy()
+    
+    return action_names[np.where(label_id==v_label)[0]]
