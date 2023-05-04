@@ -1,4 +1,4 @@
-# THINGS TO CHANGE BEFORE RUNNING THIS SCRIPT
+# THINGS TO CHANGE BEFORE RUNNING THIS SCRIPT (CTRL+F FOR "CHANGE THIS")
 # 1. THE CPU YOU ARE USING 
 # 2. THE NUMBER OF EPOCHS IN TRAINING
 # 3. THE MODEL PATH (FOR SAVING)
@@ -7,7 +7,7 @@
 import os
 from sklearn.metrics import accuracy_score, f1_score, confusion_matrix, precision_score
 os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   
-os.environ["CUDA_VISIBLE_DEVICES"]='3'
+os.environ["CUDA_VISIBLE_DEVICES"]='3' # CHANGE THIS
 # os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:<1024>"
 import sys
 import argparse
@@ -105,7 +105,7 @@ optimizer = optim.SGD(i3d.parameters(), lr=0.1, momentum=0.9, weight_decay=0.000
 lr_sched = optim.lr_scheduler.MultiStepLR(optimizer, [300, 1000])
 
 # set up training variables 
-epochs = 2 # will need to increase later
+epochs = 10 # CHANGE THIS
 tot_loss = 0.0
 writer = SummaryWriter("deleteme")
 step = 0
@@ -151,5 +151,5 @@ for e in range(epochs):
 writer.flush() # ensure that all loss values are recorded 
 
 # save model
-model_path = "models/baseline_2epochs"
+model_path = "models/baseline_10epochs" # CHANGE THIS
 torch.save(i3d, model_path)
