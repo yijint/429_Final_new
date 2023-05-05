@@ -53,25 +53,27 @@ def run_preprocessing():
     v_labels = single_class_labels[top_idx]
 
     # reorder the labels from 0 to num_classes
-    video_labels = np.zeros(4805, dtype=np.int8)
+    new_labels = np.zeros(len(v_labels), dtype=np.int8)
     unique_labels = list(set(v_labels))
     for i in range(len(v_labels)):
-        video_labels[i] = unique_labels.index(v_labels[i])
+        new_labels[i] = unique_labels.index(v_labels[i])
 
-    return v_names, video_labels
+    return v_names, new_labels, unique_labels
 
 # function to get action name based on video label 
-def get_action(v_label):
+def get_action(unique_idx, unique_labels):
+    
     # Get the action name corresponding to each label:
+    unique_label = unique_labels[unique_idx.item()]
     df_action = pd.read_csv('labels/df_action.txt')
     label_id = df_action["index"].to_numpy()
     action_names = df_action["action"].to_numpy()
     
-    return action_names[np.where(label_id==v_label)[0]]
+    return action_names[np.where(label_id==unique_label)[0]]
 
 def holdout_set(test_size):
-    v_names, video_labels = run_preprocessing()
+    v_names, v_labels, _ = run_preprocessing()
     video_train, video_val, label_train, label_val = train_test_split(v_names, v_labels,
-                                                    test_size=test_size,
-                                                    random_state=111)
+                                                                      test_size=test_size,
+                                                                      random_state=111)
     return video_train, video_val, label_train, label_val
