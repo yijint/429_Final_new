@@ -76,6 +76,8 @@ class Unit3D(nn.Module):
                                 padding=0, # we always want padding to be 0 here. We will dynamically pad based on input size in forward function
                                 bias=self._use_bias)
         
+        self.dropout_1 = nn.Dropout(0.4) #can change num
+        
         if self._use_batch_norm:
             self.bn = nn.BatchNorm3d(self._output_channels, eps=0.001, momentum=0.01)
 
@@ -113,6 +115,10 @@ class Unit3D(nn.Module):
         #print x.size()        
 
         x = self.conv3d(x)
+        
+        #ADD DROPOUT: DOES THIS WORK?
+        x = self.dropout_1(x)
+        
         if self._use_batch_norm:
             x = self.bn(x)
         if self._activation_fn is not None:
