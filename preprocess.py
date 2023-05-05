@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 from collections import Counter
+from sklearn.model_selection import train_test_split
 
 def run_preprocessing():
     
@@ -67,3 +68,10 @@ def get_action(v_label):
     action_names = df_action["action"].to_numpy()
     
     return action_names[np.where(label_id==v_label)[0]]
+
+def holdout_set(test_size):
+    v_names, video_labels = run_preprocessing()
+    video_train, video_val, label_train, label_val = train_test_split(v_names, v_labels,
+                                                    test_size=test_size,
+                                                    random_state=111)
+    return video_train, video_val, label_train, label_val
