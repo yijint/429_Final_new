@@ -72,8 +72,8 @@ def get_action(unique_idx, unique_labels):
     return action_names[np.where(label_id==unique_label)[0]]
 
 def holdout_set(test_size):
-    v_names, v_labels, _ = run_preprocessing()
+    v_names, v_labels, unique_labels = run_preprocessing()
     video_train, video_val, label_train, label_val = train_test_split(v_names, v_labels,
                                                                       test_size=test_size,
                                                                       random_state=111)
-    return video_train, video_val, label_train, label_val
+    return video_train, video_val, label_train, label_val, unique_labels
