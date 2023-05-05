@@ -18,7 +18,6 @@ List of augmenters:
     * GaussianBlur
     * ElasticTransformation
     * PiecewiseAffineTransform
-    * InvertColor
     * Add
     * Multiply
     * Pepper
@@ -148,25 +147,6 @@ class RandomShear(object):
                                 'but got list of {0}'.format(type(clip[0])))
 
 # Adapted from https://github.com/okankop/vidaug/blob/master/vidaug/augmentors/intensity.py :
-
-class InvertColor(object):
-    """
-    Inverts the color of the video.
-    """
-
-    def __call__(self, clip):
-        if printfunction: print("Vidaug: InvertColor")
-        
-        if isinstance(clip[0], np.ndarray):
-            return [np.invert(img) for img in clip]
-        elif isinstance(clip[0], PIL.Image.Image):
-            inverted = [ImageOps.invert(img) for img in clip]
-        else:
-            raise TypeError('Expected numpy.ndarray or PIL.Image' +
-                            'but got list of {0}'.format(type(clip[0])))
-
-        return inverted
-
 
 class Add(object):
     """
