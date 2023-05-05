@@ -19,12 +19,10 @@ class RandomFlip(object):
             seq Images: Randomly flipped seq images.
         """
         if random.random() < self.p:
-            # t x h x w
+            # RGB x t x h x w
             rand_axis = random.randrange(0,3)
-            print(f"flipped axis: {rand_axis}")
+            if (rand_axis == 1): rand_axis = 3 # don't flip the time dimension
             return np.flip(imgs.copy(), axis=rand_axis)
-        else: 
-            print("no flipping")
         return imgs
 
     def __repr__(self):
