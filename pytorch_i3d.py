@@ -55,7 +55,9 @@ class Unit3D(nn.Module):
                  activation_fn=F.relu,
                  use_batch_norm=True,
                  use_bias=False,
-                 name='unit_3d'):
+                 name='unit_3d',
+                 is_dropout = False,
+                 dropout_prob = 0.5):
         
         """Initializes Unit3D module."""
         super(Unit3D, self).__init__()
@@ -68,6 +70,8 @@ class Unit3D(nn.Module):
         self._use_bias = use_bias
         self.name = name
         self.padding = padding
+        self.is_dropout = is_dropout
+        
         
         self.conv3d = nn.Conv3d(in_channels=in_channels,
                                 out_channels=self._output_channels,
@@ -76,7 +80,8 @@ class Unit3D(nn.Module):
                                 padding=0, # we always want padding to be 0 here. We will dynamically pad based on input size in forward function
                                 bias=self._use_bias)
         
-        self.dropout_1 = nn.Dropout(0.4) #can change num
+        if self.is_dropout: 
+            self.dropout_1 = nn.Dropout(dropout_prob) #can change num
         
         if self._use_batch_norm:
             self.bn = nn.BatchNorm3d(self._output_channels, eps=0.001, momentum=0.01)
@@ -116,8 +121,9 @@ class Unit3D(nn.Module):
 
         x = self.conv3d(x)
         
-        #ADD DROPOUT: DOES THIS WORK?
-        x = self.dropout_1(x)
+        # ADD DROPOUT
+        if self.is_dropout: 
+            x = self.dropout_1(x)
         
         if self._use_batch_norm:
             x = self.bn(x)
@@ -226,22 +232,22 @@ class InceptionI3d(nn.Module):
         self.end_points = {}
         end_point = 'Conv3d_1a_7x7'
         self.end_points[end_point] = Unit3D(in_channels=in_channels, output_channels=64, kernel_shape=[7, 7, 7],
-                                            stride=(2, 2, 2), padding=(3,3,3),  name=name+end_point)
+                                            stride=(2, 2, 2), padding=(3,3,3),  name=name+end_point,
+                                            is_dropout = False, dropout_prob = 0.5)
         if self._final_endpoint == end_point: return
         
         end_point = 'MaxPool3d_2a_3x3'
-        self.end_points[end_point] = MaxPool3dSamePadding(kernel_size=[1, 3, 3], stride=(1, 2, 2),
-                                                             padding=0)
+        self.end_points[end_point] = MaxPool3dSamePadding(kernel_size=[1, 3, 3], stride=(1, 2, 2), padding=0)
         if self._final_endpoint == end_point: return
         
         end_point = 'Conv3d_2b_1x1'
         self.end_points[end_point] = Unit3D(in_channels=64, output_channels=64, kernel_shape=[1, 1, 1], padding=0,
-                                       name=name+end_point)
+                                       name=name+end_point, is_dropout = False, dropout_prob = 0.5)
         if self._final_endpoint == end_point: return
         
         end_point = 'Conv3d_2c_3x3'
         self.end_points[end_point] = Unit3D(in_channels=64, output_channels=192, kernel_shape=[3, 3, 3], padding=1,
-                                       name=name+end_point)
+                                       name=name+end_point, is_dropout = False, dropout_prob = 0.5)
         if self._final_endpoint == end_point: return
 
         end_point = 'MaxPool3d_3a_3x3'
@@ -305,7 +311,8 @@ class InceptionI3d(nn.Module):
                              activation_fn=None,
                              use_batch_norm=False,
                              use_bias=True,
-                             name='logits')
+                             name='logits',
+                             is_dropout = False, dropout_prob = 0.5)
 
         self.build()
 
@@ -318,7 +325,8 @@ class InceptionI3d(nn.Module):
                              activation_fn=None,
                              use_batch_norm=False,
                              use_bias=True,
-                             name='logits')
+                             name='logits',
+                             is_dropout = False, dropout_prob = 0.5)
         
     
     def build(self):
