@@ -1,14 +1,17 @@
+##############################################################################################################################
 # TO CHANGE BEFORE RUNNING
 is_augment = False
 is_dropout = False
-dropout_details = "layer1_p0.5"
+dropout_details = ""
 learning_rate = 0.1
 l2 = False
-wd = None
-lambda1 = 1e-1
+wd = 1e-7
+lambda1 = 1e-7 
 num_epochs = 30
+root_path = "/home/jt9744/COS429/429_Final_new/" # CHANGE THIS TO YOUR ROOT PATH (WHERE YOUR MODELS, LOSSES, ETC. FOLDERS ARE PLACED)
+##############################################################################################################################
 
-# "30epochs_wd_1e-07_dropout__augmented" means the there are 30 training epochs, weight decay is 1e-07, and that there is dropout and augmentation
+# create filename: "30epochs_wd_1e-07_augment" means the there are 30 training epochs, weight decay is 1e-07, and that there is augmentation but no dropout changes to the baseline model (which already has one dropout layer)
 save_name = f"{num_epochs}epochs"
 if (not l2): save_name = save_name + "_l1_lr_" + str(learning_rate) + "_ld_" + str(lambda1) # l1 regularization
 if l2: save_name = save_name + "_l2_lr_" + str(learning_rate) + "_wd_"+ str(wd) # l2 regularization
@@ -17,9 +20,6 @@ if is_augment: save_name = save_name + "_augment"
 
 import os
 from sklearn.metrics import accuracy_score, f1_score, confusion_matrix, precision_score
-# os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   
-# os.environ["CUDA_VISIBLE_DEVICES"]='3'
-# os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:<1024>"
 import sys
 import argparse
 import torch
@@ -43,9 +43,15 @@ import pandas as pd
 from collections import Counter
 from PIL import Image, ImageSequence
 
+# for running in notebooks only:
+# os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   
+# os.environ["CUDA_VISIBLE_DEVICES"]='3'
+# os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:<1024>"
+
 # video augmentation scripts (c) 2018 okankop
 from vidaug import *
 
+# BUILD DATASET
 class dataset(torch.utils.data.Dataset):
     
     def __init__(self, paths, v_names, v_labels, num_samples=16, transforms=None): # num_samples cannot be lower than 16
@@ -89,7 +95,8 @@ class dataset(torch.utils.data.Dataset):
 
     def __len__(self):
         return len(self.data)
-    
+
+# BUILD DATA AUGMENTATION
 if is_augment:
     sometimes = lambda aug: Sometimes(0.4, aug) # Used to apply augmentor with 40% probability
     rand_aug = SomeOf([ # randomly chooses two of the following augmentation methods 
@@ -107,6 +114,7 @@ if is_augment:
         sometimes(Salt(ratio=25)), # sets a certain fraction of pixel intensities to 255
     ], 2) # only select two of the above augmenters each time
     
+## EXTRACT VIDEOS
 video_train, video_val, label_train, label_val, unique_labels = holdout_set(0.25) #valid names and videos
 batch_size = 10 # batch size in training
 num_videos_train = len(video_train)
@@ -129,7 +137,7 @@ d_val = dataset(paths=good_paths_val, v_names=video_val, v_labels= label_val)
 loader_train = torch.utils.data.DataLoader(d_train, shuffle=True, batch_size=batch_size, drop_last=False, num_workers=1)
 loader_val = torch.utils.data.DataLoader(d_val, shuffle=True, batch_size=batch_size, drop_last=False, num_workers=1)
 
-start_time = time.time() 
+## CONSTRUCT MODEL 
 i3d = InceptionI3d(400, in_channels=3) # first input is num_classes in kinetics, this is replaced with replace_logits
 
 if is_dropout: i3d.load_state_dict(torch.load('rgb_imagenet.pt'), strict=False) #added strict = false; theoretically this lets us add layers
@@ -137,9 +145,9 @@ else: i3d.load_state_dict(torch.load('rgb_imagenet.pt'))
 
 i3d.replace_logits(num_classes)
 i3d.cuda()
+i3d = nn.DataParallel(i3d)
 
-print(f"time taken: {time.time()-start_time} seconds")
-
+# FUNCTION FOR EVALUATING MODEL PERFORMANCE
 #returns accuracy, f1 score, average f1, and confusion matrix for the data
 def eval_metrics(ground_truth, predictions, num_classes):
 
@@ -155,6 +163,7 @@ def eval_metrics(ground_truth, predictions, num_classes):
     
     return metrics
 
+# FUNCTION FOR TRAINING
 def training(model, optimizer, loader, num_classes, reg_type, ld=None):
     losses = []
     ground_truth = []
@@ -183,7 +192,9 @@ def training(model, optimizer, loader, num_classes, reg_type, ld=None):
         optimizer.step()
     
     metrics = eval_metrics(ground_truth, predictions, num_classes)   
-    return np.mean(losses), metrics # one loss per epoch and the corresponding metrics        
+    return np.mean(losses), metrics # one loss per epoch and the corresponding metrics
+
+# FUNCTION FOR VALIDATION
 def evaluate(model, loader, num_classes):
     losses = []
     ground_truth = []
@@ -204,9 +215,8 @@ def evaluate(model, loader, num_classes):
     metrics = eval_metrics(ground_truth, predictions, num_classes)
     return np.mean(losses), metrics # one loss per epoch and the corresponding metrics
     
-    
+# TRAINING 
 # set up gradient descent params
-
 if (l2): # l2 regularization 
     optimizer = optim.SGD(i3d.parameters(), lr=learning_rate, momentum=0.9, weight_decay=wd) # weight_decay = l2 regularization
     lr_sched = optim.lr_scheduler.MultiStepLR(optimizer, [300, 1000])
@@ -214,8 +224,7 @@ else: # l1 regularization
     optimizer = optim.SGD(i3d.parameters(), lr=learning_rate, momentum=0.9) 
     lr_sched = optim.lr_scheduler.MultiStepLR(optimizer, [300, 1000])
 
-
-# save performance
+# lists to save performance progression during training
 train_losses = []
 train_accuracies = []
 train_precisions = []
@@ -246,14 +255,14 @@ for e in range(num_epochs):
     val_accuracies.append(metrics_val["accuracy"])
     val_precisions.append(metrics_val["precision"])
     
-    np.savetxt('/home/jt9744/COS429/429_Final/herve_losses/train/train_'+ save_name, np.array(train_losses), delimiter=",")
-    np.savetxt('/home/jt9744/COS429/429_Final/herve_losses/val/val_' + save_name, np.array(val_losses), delimiter=",")
+    np.savetxt(root_path + 'losses/train/train_'+ save_name, np.array(train_losses), delimiter=",")
+    np.savetxt(root_path + 'losses/val/val_' + save_name, np.array(val_losses), delimiter=",")
 
-    np.savetxt('/home/jt9744/COS429/429_Final/herve_accuracies/train/train_'+save_name, np.array(train_accuracies), delimiter=",")
-    np.savetxt('/home/jt9744/COS429/429_Final/herve_accuracies/val/val_'+save_name, np.array(val_accuracies), delimiter=",")
+    np.savetxt(root_path + 'accuracies/train/train_'+save_name, np.array(train_accuracies), delimiter=",")
+    np.savetxt(root_path + 'accuracies/val/val_'+save_name, np.array(val_accuracies), delimiter=",")
 
-    np.savetxt('/home/jt9744/COS429/429_Final/herve_precisions/train/train_'+save_name, np.array(train_precisions), delimiter=",")
-    np.savetxt('/home/jt9744/COS429/429_Final/herve_precisions/val/val_'+save_name, np.array(val_precisions), delimiter=",")
+    np.savetxt(root_path + 'precisions/train/train_'+save_name, np.array(train_precisions), delimiter=",")
+    np.savetxt(root_path + 'precisions/val/val_'+save_name, np.array(val_precisions), delimiter=",")
 
     print("VALIDATION")
     print("Loss", loss_val)
@@ -262,11 +271,13 @@ for e in range(num_epochs):
         
     print(f"Time taken for epoch {e}: {(time.time()-start_time)/60} mins")
     print("-----------------------------------------------------------------------")
-    
+
+# PRINT FINAL PERFORMANCE 
 print(f"train_losses: {train_losses}")
 print(f"val_losses: {val_losses}")
 print(f"train_accuracies: {train_accuracies}")
 print(f"val_accuracies: {val_accuracies}")
 
-model_path = "/home/jt9744/COS429/429_Final/herve_models_trained/" + save_name 
+# SAVE MODEL
+model_path = root_path + "models/" + save_name 
 torch.save(i3d, model_path)
