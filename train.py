@@ -9,6 +9,7 @@ wd = 1e-7
 lambda1 = 1e-7 
 num_epochs = 30
 root_path = "/home/jt9744/COS429/429_Final_new/" # CHANGE THIS TO YOUR ROOT PATH (WHERE YOUR MODELS, LOSSES, ETC. FOLDERS ARE PLACED)
+# IF YOU ARE MASHA, REMEMBER TO CHANGE YOUR DROPOUT PROBABILITIES BELOW AND WHEREVER NEEDED
 ##############################################################################################################################
 
 # create filename: "30epochs_wd_1e-07_augment" means the there are 30 training epochs, weight decay is 1e-07, and that there is augmentation but no dropout changes to the baseline model (which already has one dropout layer)
