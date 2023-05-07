@@ -240,6 +240,7 @@ for e in range(num_epochs):
     print("EPOCH", e)
     
     # training
+    i3d.train()
     loss_train, metrics_train = training(model=i3d, optimizer=optimizer, loader=loader_train, num_classes=num_classes, reg_type=l2, ld=lambda1)
     train_losses.append(loss_train)
     train_accuracies.append(metrics_train["accuracy"])
@@ -251,6 +252,7 @@ for e in range(num_epochs):
     print("Precision", metrics_train["precision"])
     
     # validation 
+    i3d.eval()
     loss_val, metrics_val = evaluate(model=i3d, loader=loader_val, num_classes=num_classes)
     val_losses.append(loss_val)
     val_accuracies.append(metrics_val["accuracy"])

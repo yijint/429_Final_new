@@ -9,6 +9,7 @@ wd = 1e-7
 lambda1 = 1e-7 
 num_epochs = 30
 root_path = "/home/jt9744/COS429/429_Final_new/" # CHANGE THIS TO YOUR ROOT PATH (WHERE YOUR MODELS, LOSSES, ETC. FOLDERS ARE PLACED)
+# IF YOU ARE MASHA, REMEMBER TO CHANGE YOUR DROPOUT PROBABILITIES BELOW AND WHEREVER NEEDED
 ##############################################################################################################################
 
 # create filename: "30epochs_wd_1e-07_augment" means the there are 30 training epochs, weight decay is 1e-07, and that there is augmentation but no dropout changes to the baseline model (which already has one dropout layer)
@@ -239,6 +240,7 @@ for e in range(num_epochs):
     print("EPOCH", e)
     
     # training
+    i3d.train()
     loss_train, metrics_train = training(model=i3d, optimizer=optimizer, loader=loader_train, num_classes=num_classes, reg_type=l2, ld=lambda1)
     train_losses.append(loss_train)
     train_accuracies.append(metrics_train["accuracy"])
@@ -250,6 +252,7 @@ for e in range(num_epochs):
     print("Precision", metrics_train["precision"])
     
     # validation 
+    i3d.eval()
     loss_val, metrics_val = evaluate(model=i3d, loader=loader_val, num_classes=num_classes)
     val_losses.append(loss_val)
     val_accuracies.append(metrics_val["accuracy"])
