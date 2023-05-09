@@ -1,0 +1,20 @@
+Class, model with best f1
+
+Keeping still, Ensemble
+Eating, Ensemble
+Moving, Ensemble
+Flying, Ensemble
+Swimming, Ensemble
+
+Attending, Dropout
+Sensing, Dropout
+Walking, Dropout
+Chirping, Dropout
+
+Jumping, L2 regularization
+
+Running, Shallow model
+
+
+
+
