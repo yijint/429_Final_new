@@ -1,7 +1,7 @@
-# Animal Action Recognition with Pytorch i3d: Reducing Overfitting using Video Data Augmentation, Dropout, and Regularization
-COS429 Final Project 
+# COS429 Final Project: Animal Action Recognition with Pytorch i3d: Reducing Overfitting using Video Data Augmentation, Dropout, and Regularization
 
 The code is structured in the following way:
+
 Dataset:
 1. preprocess.py and preprocess.ipynb contain the code for filtering the Animal Kingdom dataset for single-label classes with more than 100 videos
 
